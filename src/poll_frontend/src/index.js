@@ -1,6 +1,7 @@
 const pollForm = document.getElementById("radioForm");
 const resultsDiv = document.getElementById("results");
 const resetButton = document.getElementById("reset");
+const resultsTitle = document.getElementById("results-title");
 
 //Note you will use "poll_backend" in this JavaScript code a few times to call the backend
 import { poll_backend } from "../../declarations/poll_backend";
@@ -47,13 +48,15 @@ pollForm.addEventListener(
     //note that this is at beginning of the submit callback, this is deliberate
     //This is so the default behavior is set BEFORE the awaits are called below
     e.preventDefault();
-
     const formData = new FormData(pollForm);
     const checkedValue = formData.get("option");
-
-    const updatedVoteCounts = await poll_backend.vote(checkedValue);
-    console.log("Returning from await...");
-    console.log(updatedVoteCounts);
+    if (!checkedValue) {
+      resultsTitle.innerText = "Select an option...";
+      return;
+    }
+    pollForm.innerHTML = getPollFormHtml();
+    const updatedVoteCounts = await castVote(checkedValue);
+    resultsTitle.innerText = "Casting vote succesful...";
     updateLocalVoteCounts(updatedVoteCounts);
     displayResults();
     return false;
@@ -65,12 +68,10 @@ resetButton.addEventListener(
   "click",
   async (e) => {
     e.preventDefault();
-
     //Reset the options in the backend
     await poll_backend.resetVotes();
     const voteCounts = await poll_backend.getVotes();
     updateLocalVoteCounts(voteCounts);
-
     //re-render the results once the votes are reset in the backend
     displayResults();
     return false;
@@ -82,6 +83,7 @@ resetButton.addEventListener(
 
 //Helper vanilla JS function to create the HTML to render the results of the poll
 function displayResults() {
+  resultsTitle.innerText = "Results";
   let resultHTML = "<ul>";
   for (let key in pollResults) {
     resultHTML +=
@@ -101,4 +103,28 @@ function updateLocalVoteCounts(arrayOfVoteArrays) {
     let voteCount = voteArray[1];
     pollResults[voteOption] = voteCount;
   }
+}
+
+function getPollFormHtml() {
+  return `
+      <label>
+        <input type="radio" name="option" value="Rust"> Rust
+      </label><br>
+      <label>
+          <input type="radio" name="option" value="Motoko"> Motoko
+      </label><br>
+      <label>
+          <input type="radio" name="option" value="TypeScript"> TypeScript
+      </label><br>
+      <label>
+          <input type="radio" name="option" value="Python"> Python
+      </label><br>
+      <button type="submit">Vote</button>
+    `;
+}
+
+async function castVote(checkedValue) {
+  resultsTitle.innerText = "Casting your vote...";
+  const updatedVoteCounts = await poll_backend.vote(checkedValue);
+  return updatedVoteCounts;
 }

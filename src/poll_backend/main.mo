@@ -38,10 +38,11 @@ actor {
   // the method reset the vote count
   public func resetVotes() : async [(Text, Nat)] {
     votes.put("Motoko", 0);
-    votes.put("Typescript", 0);
+    votes.put("TypeScript", 0);
     votes.put("Rust", 0);
     votes.put("Python", 0);
 
     Iter.toArray(votes.entries());
   };
 };
+// so in Motoko there is no need to write a return statement?
